@@ -1,0 +1,2 @@
+
+STTHOMAS_v1.py -a v2 -p 4 -v --jointfusion --tempdir temp wmn_pre.nii.gz ALL
