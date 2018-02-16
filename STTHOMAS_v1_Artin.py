@@ -498,6 +498,9 @@ def main(args, temp_path, pool):
 
     t1 = time.time()
     # Coronal axis for RL PA IS orientation
+
+    print "something somethings"
+    
     vlps = split_roi(data, None, 2)
     for fname, sub_vlp in zip(['6_VLPv.nii.gz', '6_VLPd.nii.gz'], vlps):
         output_nii = nibabel.Nifti1Image(sub_vlp, affine, hdr)
