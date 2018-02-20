@@ -171,14 +171,22 @@ parser.add_argument('--jointfusion', action='store_true', help='use older jointf
 parser.add_argument('--tempdir', help='temporary directory to store registered atlases.  This will not be deleted as usual.')
 parser.add_argument('--mask', help='custom mask if 93x187x68 mask size is not wanted')
 parser.add_argument('--template', help='custom template if 93x187x68 size is not wanted')
+parser.add_argument('--Downsample', help='Downsample the input (linear part) for increasing the speed')
 parser.add_argument('--output_path', help='specify a different output_path for the output file for single ROI or directory for multiple ROIs')
 # TODO handle single roi, single output file case
 # TODO fix verbose and debug
-# TODO go back to shell=False for command to suppress output and then fix sanitize labels
+# TODO go back to shell=False for command to suppress output and then fix sanitize labels 4
 
 
 def main(args, temp_path, pool):
+
+    print orig_template
+
+    # orig_template = orig_template.split('orig_template.nii.gz') + 'origtemplate_Contrast0.5.nii.gz'
+# """
     input_image = orig_input_image = args.input_image
+
+
 
     # assigning default value of mask
     mask = mask_93
@@ -221,6 +229,8 @@ def main(args, temp_path, pool):
     # print 'Template being used is'
     # print os.path.abspath(template)
 
+    print('-------------*********output_path************------------')
+    print(output_path)
 
     # TODO prevent both jointfusion and majority voting being set
 	# if args.jointfusion is None:
@@ -248,54 +258,57 @@ def main(args, temp_path, pool):
         print 'orig_template: %s' % orig_template
         print 'orig_input_image: %s' % orig_input_image
 
-        SamplingRate = 4
-        print '--------------------------DownSample_orig_template----------------------------------------'
-        imm = nib.load(orig_template)
 
-        NewAffine = imm.affine.copy()
-        for i in range(0,3):
-            NewAffine[i,i] = imm.affine[i,i]*SamplingRate
+        if args.Downsample is not None:
 
-        NewSize = [imm.shape[0]/SamplingRate , imm.shape[1]/SamplingRate , imm.shape[2]/SamplingRate]
+            t1 = time.time()
+            SamplingRate = int(args.Downsample)
 
-        img_DS = image.resample_img(imm, target_affine=NewAffine,target_shape=NewSize )
+            # SamplingRate = 4
+            print '--------------------------DownSample_orig_template----------------------------------------'
+            imm = nib.load(orig_template)
 
-        orig_template_DS = orig_template.split('.nii.gz')[0]+'_DS.nii.gz'
-        nib.save(img_DS,orig_template_DS)
-        # img_DS_US = image.resample_img(img_DS, target_affine=img.affine,target_shape=img.shape )
+            NewAffine = imm.affine.copy()
+            for i in range(0,3):
+                NewAffine[i,i] = imm.affine[i,i]*SamplingRate
 
-        print '-------------------------DownSample_orig_input_image-------------------------------------'
-        print orig_input_image
-        imm = nib.load(orig_input_image)
-        NewAffine = imm.affine.copy()
-        for i in range(0,3):
-            NewAffine[i,i] = imm.affine[i,i]*SamplingRate
+            NewSize = [imm.shape[0]/SamplingRate , imm.shape[1]/SamplingRate , imm.shape[2]/SamplingRate]
 
-        NewSize = [imm.shape[0]/SamplingRate , imm.shape[1]/SamplingRate , imm.shape[2]/SamplingRate]
+            img_DS = image.resample_img(imm, target_affine=NewAffine,target_shape=NewSize )
 
-        img_DS = image.resample_img(imm, target_affine=NewAffine,target_shape=NewSize )
+            orig_template_DS = orig_template.split('.nii.gz')[0]+'_DS.nii.gz'
+            nib.save(img_DS,orig_template_DS)
+            # img_DS_US = image.resample_img(img_DS, target_affine=img.affine,target_shape=img.shape )
 
-        orig_input_image_DS = orig_input_image.split('.nii.gz')[0]+'_DS.nii.gz'
-        nib.save(img_DS,orig_input_image_DS)
+            print '-------------------------DownSample_orig_input_image-------------------------------------'
+            print orig_input_image
+            imm = nib.load(orig_input_image)
+            NewAffine = imm.affine.copy()
+            for i in range(0,3):
+                NewAffine[i,i] = imm.affine[i,i]*SamplingRate
+
+            NewSize = [imm.shape[0]/SamplingRate , imm.shape[1]/SamplingRate , imm.shape[2]/SamplingRate]
+
+            img_DS = image.resample_img(imm, target_affine=NewAffine,target_shape=NewSize )
+
+            orig_input_image_DS = orig_input_image.split('.nii.gz')[0]+'_DS.nii.gz'
+            nib.save(img_DS,orig_input_image_DS)
 
 
-        print '0.   -----Down Sampling Time Elapsed: %s  \n \n' % timedelta(seconds=time.time()-t1)
-        print '0.   -----Down Sampling Time Elapsed: %s  \n \n' % timedelta(seconds=time.time()-t)
-        print '-----^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^---------'
-        print '-----^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^---------'
+            print '0.   -----Down Sampling Time Elapsed: %s  \n \n' % timedelta(seconds=time.time()-t1)
+            print '0.   -----Down Sampling Time Elapsed: %s  \n \n' % timedelta(seconds=time.time()-t)
 
-        t1 = time.time()
-        print '-----------------------------------------------------------------------------------'
-        ants_linear_registration(orig_template_DS, orig_input_image_DS)
-        # ants_linear_registration(orig_template, orig_input_image)
+            t1 = time.time()
+            ants_linear_registration(orig_template_DS, orig_input_image_DS)
+
+        else:
+
+            t1 = time.time()
+            ants_linear_registration(orig_template, orig_input_image)
 
         print '1.   ----- ants_linear_registration Time Elapsed : %s  \n \n' % timedelta(seconds=time.time()-t1)
         print '1.   ----- ants_linear_registration Time Elapsed : %s  \n \n' % timedelta(seconds=time.time()-t)
 
-        print '-----&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&---------'
-        print '-----&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&---------'
-
-# """
         mask_input = os.path.join(os.path.dirname(orig_input_image), 'mask_inp.nii.gz')
 
         print "2.   Transform mask from template space to input space \n"
@@ -318,6 +331,9 @@ def main(args, temp_path, pool):
         parallel_command(crop_by_mask(orig_input_image, input_image, mask_input))
         print '3.   ----- Cropping input using this mask Time Elapsed: %s  \n \n' % timedelta(seconds=time.time()-t1)
         print '3.   ----- Cropping input using this mask Time Elapsed: %s  \n \n' % timedelta(seconds=time.time()-t)
+
+    print('-------------*********output_path************------------')
+    print(output_path)
 
 
     # FSL automatically converts .nii to .nii.gz
@@ -354,6 +370,9 @@ def main(args, temp_path, pool):
         ants_nonlinear_registration(template, input_image, warp_path, **exec_options)
     else:
         print 'Skipped, using %sInverseWarp.nii.gz and %sAffine.txt' % (warp_path, warp_path)
+
+    print('-------------*********output_path************------------')
+    print(output_path)
 
     print '5b.   ----- ants_nonlinear_registration Time Elapsed: %s  \n \n' % timedelta(seconds=time.time()-t1)
     print '5b.   ----- ants_nonlinear_registration Time Elapsed: %s  \n \n' % timedelta(seconds=time.time()-t)
@@ -480,7 +499,12 @@ def main(args, temp_path, pool):
     print '8. --- Resort output to original ordering. Elapsed: %s  \n \n' % timedelta(seconds=time.time() - t)
 
     # get the vlp file path for splitting
+    print('-------------*********output_path************------------')
+    print(output_path)
     vlp_file = os.path.join(output_path, '6-VLP.nii.gz')
+    print('-------------*********************------------')
+    print('vlp_file:   ' + vlp_file)
+
 
     # Re-orient to standard space - LR PA IS format
     san_vlp_file = os.path.join(output_path, 'san_6-VLP.nii.gz')
@@ -498,9 +522,6 @@ def main(args, temp_path, pool):
 
     t1 = time.time()
     # Coronal axis for RL PA IS orientation
-
-    print "something somethings"
-    
     vlps = split_roi(data, None, 2)
     for fname, sub_vlp in zip(['6_VLPv.nii.gz', '6_VLPd.nii.gz'], vlps):
         output_nii = nibabel.Nifti1Image(sub_vlp, affine, hdr)
