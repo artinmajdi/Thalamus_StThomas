@@ -8,7 +8,8 @@ import shelve
 image_name = 'WMnMPRAGE_bias_corr.nii.gz'
 # Find path for priors
 this_path = os.path.dirname(os.path.realpath(__file__))
-template = os.path.join(this_path, 'origtemplate.nii.gz') # 'template.nii.gz')
+# template = os.path.join(this_path, 'origtemplate.nii.gz') # 'template.nii.gz')
+template = os.path.join(this_path, 'template.nii.gz') # 'template.nii.gz')
 assert os.path.exists(template)
 prior_path = os.path.join(this_path, 'priors/')
 assert os.path.exists(prior_path)

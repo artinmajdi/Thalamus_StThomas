@@ -1,0 +1,10 @@
+origtemplate_Contrast0.5
+origtemplate_Contrast1
+origtemplate_Contrast2
+origtemplate_Contrast4
+origtemplate_Contrast10
+origtemplate_Sharpness0.5
+origtemplate_Sharpness1
+origtemplate_Sharpness2
+origtemplate_Sharpness4
+origtemplate_Sharpness10
