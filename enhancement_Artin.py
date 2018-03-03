@@ -33,7 +33,7 @@ for InputIm in ['template' , 'testFiles']:
         name = 'templ_93x187x68.nii.gz'
 
     elif InputIm == 'testFiles':
-        Directory = '/media/data1/artin/vimp2_TestC/'
+        Directory = '/media/data1/artin/vimp2_TestA/'
         name = 'WMnMPRAGEdeformed.nii.gz'  # WMnMPRAGEdeformed origtemplate  wmnpre wmnpre_Contrast_int16DivideMultipliedBy70_5.nii.gz
 
     im = nib.load(Directory+name)
@@ -42,7 +42,7 @@ for InputIm in ['template' , 'testFiles']:
     # imD = imD.astype(float)*256/imD.max()
     imD = imD*256/imD.max()
 
-    scaleEnhance = [0.5 , 1.5 , 2.1 , 4.1 , 6.1]
+    scaleEnhance = [0.5 , 1.5 , 2.1 , 4.1 , 6.1 , 8.3 , 10.2]
     sz = imD.shape
 
     for EnhMethod in ['Sharpness' , 'Contrast']:

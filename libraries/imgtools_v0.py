@@ -116,6 +116,7 @@ def create_atlas(label, path, subjects, target, output_atlas, echo=False):
 cv_registration_method
 """
 def crop_by_mask(input_image, output_image, mask, label=1, padding=0):
+    # def crop_by_mask(input_image, output_image, mask, label=1, padding=1):
     # ExtractRegionFromImageByMask ImageDimension inputImage outputImage labelMaskImage [label=1] [padRadius=0]
     cmd = 'ExtractRegionFromImageByMask 3 %s %s %s %s %s' % (input_image, output_image, mask, label, padding)
     return cmd
