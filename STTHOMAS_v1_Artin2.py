@@ -38,6 +38,7 @@ parser.add_argument('--mask', help='custom mask if 93x187x68 mask size is not wa
 parser.add_argument('--template', help='custom template if 93x187x68 size is not wanted')
 parser.add_argument('--Downsample', help='Downsample the input (linear part) for increasing the speed')
 parser.add_argument('--BiosCorrectName', help='WMnMPRAGE_bias_corr')
+parser.add_argument('--MaskInput', help='MaskInput')
 parser.add_argument('--output_path', help='specify a different output_path for the output file for single ROI or directory for multiple ROIs')
 # TODO handle single roi, single output file case
 # TODO fix verbose and debug
@@ -282,66 +283,67 @@ def main(args, temp_path, pool):
         print BiosCorrectName
         print '---------------------------------------'
 
+        if args.MaskInput is None:
+            if args.Downsample is not None:
 
-        if args.Downsample is not None:
+                t1 = time.time()
+                SamplingRate = int(args.Downsample)
 
+                # SamplingRate = 4
+                print '--------------------------DownSample_orig_template----------------------------------------'
+                imm = nib.load(orig_template)
+
+                NewAffine = imm.affine.copy()
+                for i in range(0,3):
+                    NewAffine[i,i] = imm.affine[i,i]*SamplingRate
+
+                NewSize = [imm.shape[0]/SamplingRate , imm.shape[1]/SamplingRate , imm.shape[2]/SamplingRate]
+
+                img_DS = image.resample_img(imm, target_affine=NewAffine,target_shape=NewSize )
+
+                orig_template_DS = orig_template.split('.nii.gz')[0]+'_DS.nii.gz'
+                nib.save(img_DS,orig_template_DS)
+                # img_DS_US = image.resample_img(img_DS, target_affine=img.affine,target_shape=img.shape )
+
+                print '-------------------------DownSample_orig_input_image-------------------------------------'
+                print orig_input_image
+                imm = nib.load(orig_input_image)
+                NewAffine = imm.affine.copy()
+                for i in range(0,3):
+                    NewAffine[i,i] = imm.affine[i,i]*SamplingRate
+
+                NewSize = [imm.shape[0]/SamplingRate , imm.shape[1]/SamplingRate , imm.shape[2]/SamplingRate]
+
+                img_DS = image.resample_img(imm, target_affine=NewAffine,target_shape=NewSize )
+
+                orig_input_image_DS = orig_input_image.split('.nii.gz')[0]+'_DS.nii.gz'
+                nib.save(img_DS,orig_input_image_DS)
+
+
+                print '0.   -----Down Sampling Time Elapsed: %s  \n \n' % timedelta(seconds=time.time()-t1)
+                print '0.   -----Down Sampling Time Elapsed: %s  \n \n' % timedelta(seconds=time.time()-t)
+
+                t1 = time.time()
+                ants_linear_registration(orig_template_DS, orig_input_image_DS)
+
+            else:
+
+                t1 = time.time()
+                ants_linear_registration(orig_template, orig_input_image)
+
+            print '1.   ----- ants_linear_registration Time Elapsed : %s  \n \n' % timedelta(seconds=time.time()-t1)
+            print '1.   ----- ants_linear_registration Time Elapsed : %s  \n \n' % timedelta(seconds=time.time()-t)
+
+            mask_input = os.path.join(os.path.dirname(orig_input_image), 'mask_inp.nii.gz')
+
+            print "2.   Transform mask from template space to input space \n"
             t1 = time.time()
-            SamplingRate = int(args.Downsample)
-
-            # SamplingRate = 4
-            print '--------------------------DownSample_orig_template----------------------------------------'
-            imm = nib.load(orig_template)
-
-            NewAffine = imm.affine.copy()
-            for i in range(0,3):
-                NewAffine[i,i] = imm.affine[i,i]*SamplingRate
-
-            NewSize = [imm.shape[0]/SamplingRate , imm.shape[1]/SamplingRate , imm.shape[2]/SamplingRate]
-
-            img_DS = image.resample_img(imm, target_affine=NewAffine,target_shape=NewSize )
-
-            orig_template_DS = orig_template.split('.nii.gz')[0]+'_DS.nii.gz'
-            nib.save(img_DS,orig_template_DS)
-            # img_DS_US = image.resample_img(img_DS, target_affine=img.affine,target_shape=img.shape )
-
-            print '-------------------------DownSample_orig_input_image-------------------------------------'
-            print orig_input_image
-            imm = nib.load(orig_input_image)
-            NewAffine = imm.affine.copy()
-            for i in range(0,3):
-                NewAffine[i,i] = imm.affine[i,i]*SamplingRate
-
-            NewSize = [imm.shape[0]/SamplingRate , imm.shape[1]/SamplingRate , imm.shape[2]/SamplingRate]
-
-            img_DS = image.resample_img(imm, target_affine=NewAffine,target_shape=NewSize )
-
-            orig_input_image_DS = orig_input_image.split('.nii.gz')[0]+'_DS.nii.gz'
-            nib.save(img_DS,orig_input_image_DS)
-
-
-            print '0.   -----Down Sampling Time Elapsed: %s  \n \n' % timedelta(seconds=time.time()-t1)
-            print '0.   -----Down Sampling Time Elapsed: %s  \n \n' % timedelta(seconds=time.time()-t)
-
-            t1 = time.time()
-            ants_linear_registration(orig_template_DS, orig_input_image_DS)
-
+            # Transform mask from template space to input space
+            ants_WarpImageMultiTransform(mask, mask_input, orig_input_image)
+            print '2.   ----- Transform mask from template space to input space Time Elapsed: %s  \n \n' % timedelta(seconds=time.time()-t1)
+            print '2.   ----- Transform mask from template space to input space Time Elapsed: %s  \n \n' % timedelta(seconds=time.time()-t)
         else:
-
-            t1 = time.time()
-            ants_linear_registration(orig_template, orig_input_image)
-
-        print '1.   ----- ants_linear_registration Time Elapsed : %s  \n \n' % timedelta(seconds=time.time()-t1)
-        print '1.   ----- ants_linear_registration Time Elapsed : %s  \n \n' % timedelta(seconds=time.time()-t)
-
-        mask_input = os.path.join(os.path.dirname(orig_input_image), 'mask_inp.nii.gz')
-
-        print "2.   Transform mask from template space to input space \n"
-        t1 = time.time()
-        # Transform mask from template space to input space
-        ants_WarpImageMultiTransform(mask, mask_input, orig_input_image)
-        print '2.   ----- Transform mask from template space to input space Time Elapsed: %s  \n \n' % timedelta(seconds=time.time()-t1)
-        print '2.   ----- Transform mask from template space to input space Time Elapsed: %s  \n \n' % timedelta(seconds=time.time()-t)
-
+            mask_input = os.path.join(os.path.dirname(orig_input_image), 'mask_inp.nii.gz')
 
         file_name = os.path.basename(orig_input_image)
         index_of_dot = file_name.index('.')
