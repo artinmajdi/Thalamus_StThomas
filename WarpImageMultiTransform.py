@@ -71,10 +71,10 @@ def parse_transforms(t):
     while i < N:
         arg = t[i]
         if arg == '-i':
-            args.append('[%s,1]' % t[i+1])
+            args.append(f'[{t[i + 1]},1]')
             i += 2
         else:
-            args.append(t[i])
+            args.append(arg)
             i += 1
     return args
 

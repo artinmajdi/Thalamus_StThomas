@@ -28,12 +28,9 @@ class PoolWrapper(object):
                 pass
 
     def _execute(self, args):
-        if self.unpack:
-            if isinstance(args, dict):
-                return self.func(**args)
-            return self.func(*args)
-        else:
+        if not self.unpack:
             return self.func(args)
+        return self.func(**args) if isinstance(args, dict) else self.func(*args)
 
 
 class BetterPool(multiprocessing.pool.Pool):
@@ -42,12 +39,11 @@ class BetterPool(multiprocessing.pool.Pool):
     interrupts.  By default, it will unpack tuple or dictionary arguments for the function call.
     """
     def _wrap(self, func, iterable):
-        if iterable:
-            if not isinstance(func, PoolWrapper):
-                if isinstance(iterable[0], tuple) or isinstance(iterable[0], dict):
-                    func = PoolWrapper(func, unpack=True)
-                else:
-                    func = PoolWrapper(func, unpack=False)
+        if iterable and not isinstance(func, PoolWrapper):
+            if isinstance(iterable[0], (tuple, dict)):
+                func = PoolWrapper(func, unpack=True)
+            else:
+                func = PoolWrapper(func, unpack=False)
         return func
 
     def map_async(self, func, iterable, *args, **kwargs):
