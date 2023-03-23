@@ -86,13 +86,13 @@ def conservative_mask(input_masks, output_path, dilation=0, fill=False):
     # Taken from cv_registration_method.ants_label_fusions
     # cmd = 'AverageImages 3 %s 0 %s' % (output_path, ' '.join(input_masks))
     # cmd = 'ThresholdImage 3 %s %s 0.01 1000' % (output_path, output_path)
-    cmd = 'c3d %s -accum -max -endaccum -binarize -o %s' % (' '.join(input_masks), output_path)
+    cmd = f"c3d {' '.join(input_masks)} -accum -max -endaccum -binarize -o {output_path}"
     # cmd = 'fslmaths %s -bin %s' % (' -add '.join(input_masks), output_path)
-    if sys.platform == 'linux2' or sys.platform == 'darwin':
+    if sys.platform in ['linux2', 'darwin']:
         parallel_command(cmd)
     if fill:
         # get bounding box
-        bbox = map(int, os.popen('fslstats %s -w' % output_path).read().strip().split())
+        bbox = map(int, os.popen(f'fslstats {output_path} -w').read().strip().split())
         padding = (-dilation, 2 * dilation) * 3  # min index, size change for 3 spatial dimensions
         if dilation > 0:
             # edit bounding box
@@ -100,11 +100,11 @@ def conservative_mask(input_masks, output_path, dilation=0, fill=False):
                 bbox[i] += inc
         roi = ' '.join(map(str, bbox))
         # fill bounding box
-        cmd = 'fslmaths %s -add 1 -bin -roi %s %s' % (output_path, roi, output_path)
+        cmd = f'fslmaths {output_path} -add 1 -bin -roi {roi} {output_path}'
     elif dilation > 0:
         kernel = '%dx%dx%dvox' % (dilation, dilation, dilation)
-        cmd = 'c3d %s -dilate 1 %s -o %s' % (output_path, kernel, output_path)
-    if sys.platform == 'linux2' or sys.platform == 'darwin':
+        cmd = f'c3d {output_path} -dilate 1 {kernel} -o {output_path}'
+    if sys.platform in ['linux2', 'darwin']:
         parallel_command(cmd)
     return output_path
 
@@ -158,7 +158,13 @@ def split_roi(roi, axis, split_axis):
 parser = argparse.ArgumentParser(description='Shortened Template and THalamus for Optimal Multi Atlas Segmentation (ST THOMAS) for a given WMnMPRAGE image using Majority Voting or Joint Label Fusion and the Tourdias atlas.')
 parser.add_argument('input_image', help='input WMnMPRAGE NiFTI image, may need to be in LR PA IS format')
 #parser.add_argument('output_path', help='the output file for single ROI or directory for multiple ROIs')
-parser.add_argument('roi_names', metavar='roi_names', choices=roi_choices, nargs='+', help='a space separated list of one or more ROIs.  Valid targets are: %s' % ', '.join(roi_choices))
+parser.add_argument(
+    'roi_names',
+    metavar='roi_names',
+    choices=roi_choices,
+    nargs='+',
+    help=f"a space separated list of one or more ROIs.  Valid targets are: {', '.join(roi_choices)}",
+)
 parser.add_argument('-a', '--algorithm', type=str, required=True, help='version of THOMAS: v0 or v1 or v2')
 parser.add_argument('-w', '--warp', metavar='path', help='looks for {path}InverseWarp.nii.gz and {path}Affine.txt instead of basing it off input_image.')
 parser.add_argument('-F', '--forcereg', action='store_true', help='force ANTS registration to WMnMPRAGE mean brain template. The --warp argument can be then used to specify the output path.')

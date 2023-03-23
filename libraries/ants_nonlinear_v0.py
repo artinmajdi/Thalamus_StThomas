@@ -7,24 +7,21 @@ from parallel import command
 
 
 def bias_correct(input_image, output_image, **exec_options):
-    cmd = 'N4BiasFieldCorrection -d 3 -i %s -o %s -b [200] -s 3 -c [50x50x30x20,1e-6]' % (input_image, output_image)
+    cmd = f'N4BiasFieldCorrection -d 3 -i {input_image} -o {output_image} -b [200] -s 3 -c [50x50x30x20,1e-6]'
     command(cmd, **exec_options)
     return output_image, cmd
 
 def ants_nonlinear_registration(template, input_image, output, switches='', linear=False, cost='CC', **exec_options):
     """Do nonlinear registration with ANTS as in buildtemplateparallel.sh"""
-    if linear:
-        iterations = '0'
-    else:
-        iterations = '30x90x20'
-    cmd = 'ANTS 3 -m %s[%s,%s,1,5] -t SyN[0.25] -r Gauss[3,0] -o %s -i %s --use-Histogram-Matching --number-of-affine-iterations 10000x10000x10000x10000x10000 --MI-option 32x16000 %s' % (cost, template, input_image, output, iterations, switches)
-    output_warp = output+'Warp.nii.gz'
-    output_affine = output+'Affine.txt'
+    iterations = '0' if linear else '30x90x20'
+    cmd = f'ANTS 3 -m {cost}[{template},{input_image},1,5] -t SyN[0.25] -r Gauss[3,0] -o {output} -i {iterations} --use-Histogram-Matching --number-of-affine-iterations 10000x10000x10000x10000x10000 --MI-option 32x16000 {switches}'
+    output_warp = f'{output}Warp.nii.gz'
+    output_affine = f'{output}Affine.txt'
     command(cmd, **exec_options)
     return output_warp, output_affine, cmd
 
 def ants_linear_registration(template, input_image, cost='CC', **exec_options):
-    cmd = 'ANTS 3 -m %s[%s,%s,1,5] -o linear -i 0 --use-Histogram-Matching --number-of-affine-iterations 10000x10000x10000x10000x10000 --MI-option 32x16000 --rigid-affine true' % (cost, template, input_image)
+    cmd = f'ANTS 3 -m {cost}[{template},{input_image},1,5] -o linear -i 0 --use-Histogram-Matching --number-of-affine-iterations 10000x10000x10000x10000x10000 --MI-option 32x16000 --rigid-affine true'
     output_warp = 'linearWarp.nii.gz'
     output_affine = 'linearAffine.txt'
     command(cmd, **exec_options)
@@ -32,9 +29,12 @@ def ants_linear_registration(template, input_image, cost='CC', **exec_options):
 
 def ants_apply_warp(template, input_image, input_warp, input_affine, output_image, switches='', ants_apply=False, **exec_options):
     if ants_apply:
-        cmd = os.path.join(this_path, 'tools', 'WarpImageMultiTransform.py')+' %s %s %s %s %s %s' % (switches, input_image, output_image, template, input_warp, input_affine)
+        cmd = (
+            os.path.join(this_path, 'tools', 'WarpImageMultiTransform.py')
+            + f' {switches} {input_image} {output_image} {template} {input_warp} {input_affine}'
+        )
     else:
-        cmd = 'WarpImageMultiTransform 3 %s %s %s %s -R %s %s' % (input_image, output_image, input_warp, input_affine, template, switches)
+        cmd = f'WarpImageMultiTransform 3 {input_image} {output_image} {input_warp} {input_affine} -R {template} {switches}'
     command(cmd, **exec_options)
     return output_image, cmd
 

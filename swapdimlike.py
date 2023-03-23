@@ -8,7 +8,7 @@ import subprocess
 
 
 def read_ordering(f):
-    p = subprocess.Popen('fslhd %s' % f, stdout=subprocess.PIPE, shell=True)
+    p = subprocess.Popen(f'fslhd {f}', stdout=subprocess.PIPE, shell=True)
     s = p.communicate()[0].split('\n')
     order = [el.split()[-1] for el in s if 'qform' in el and 'orient' in el]
     order = [''.join([e[0] for e in el.split('-to-')]) for el in order]

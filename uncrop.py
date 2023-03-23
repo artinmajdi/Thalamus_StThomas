@@ -18,19 +18,19 @@ def uncrop_by_mask(input_image, output_image, full_mask, padding=0, canvas=None,
     """
     if log_file is None:
         # Need to discover the bounding box
-        cmd = 'ExtractRegionFromImageByMask 3 %s %s %s 1 %s' % (full_mask, output_image, full_mask, padding)
+        cmd = f'ExtractRegionFromImageByMask 3 {full_mask} {output_image} {full_mask} 1 {padding}'
         s = os.popen(cmd).read()
     else:
         # The log file of ExtractRegionFromImageByMask is given
         with open(log_file, 'r') as f:
             s = f.read()
     s = s.split('final cropped region')[-1]
-    crop_index = re.search('Index:\s+\[(.*?)\]', s).group(1).replace(', ', 'x')
+    crop_index = re.search('Index:\s+\[(.*?)\]', s)[1].replace(', ', 'x')
     if canvas is None:
         canvas = output_image
-        cmd = 'CreateImage 3 %s %s 0' % (full_mask, canvas)
+        cmd = f'CreateImage 3 {full_mask} {canvas} 0'
         os.system(cmd)
-    cmd = 'PasteImageIntoImage 3 %s %s %s %s -1 1' % (canvas, input_image, output_image, crop_index)
+    cmd = f'PasteImageIntoImage 3 {canvas} {input_image} {output_image} {crop_index} -1 1'
     os.system(cmd)
 
 if __name__ == '__main__':

@@ -15,7 +15,7 @@ from libraries.parallel import BetterPool, command
 
 def overlap_c3d(im1, im2, label=1):
     # Compute volumes and overlap
-    x = os.popen('c3d %s %s -overlap %s' % (im1, im2, label)).read()
+    x = os.popen(f'c3d {im1} {im2} -overlap {label}').read()
     return [float(el) for el in x.split(', ')[1:4]]
 
 
@@ -62,9 +62,7 @@ class CompareOverlap(object):
         # TODO refactor using knowledge that it's a symmetric matrix of values
         # Determine pairwise overlap
         for label1 in labels:
-            overlap_params = []
-            for label2 in labels:
-                overlap_params.append((label1, label2))
+            overlap_params = [(label1, label2) for label2 in labels]
             datum = pool.map(overlap_c3d, overlap_params)
             vol1, vol2, over = zip(*datum)
             # This overwrites same value a lot, bit redundant
